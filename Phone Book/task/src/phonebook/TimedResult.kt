@@ -4,13 +4,19 @@ sealed class TimedResult<T : Any>(val start: Long, val end: Long) {
     val timeSpent = end - start
 
     abstract val isSuccess: Boolean
+    abstract fun getSuccess(): Success<T>?
+    abstract fun getSuccessResult(): T?
 
     class Success<T : Any>(start: Long, end: Long, val result: T) : TimedResult<T>(start, end) {
         override val isSuccess: Boolean = true
+        override fun getSuccess(): Success<T>? = this
+        override fun getSuccessResult(): T = result
     }
 
     class Timeout<T : Any>(start: Long, end: Long) : TimedResult<T>(start, end) {
         override val isSuccess: Boolean = false
+        override fun getSuccess(): Success<T>? = null
+        override fun getSuccessResult(): T? = null
     }
 }
 

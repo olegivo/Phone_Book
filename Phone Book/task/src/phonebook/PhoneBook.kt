@@ -1,6 +1,7 @@
 package phonebook
 
 import java.io.File
+import java.util.*
 
 class PhoneBook(
         val directoryFilePath: String,
@@ -8,44 +9,47 @@ class PhoneBook(
 ) {
     private lateinit var findItems: List<String>
     private lateinit var directoryLines: MutableList<String>
-    private lateinit var entries: MutableList<Entry>
+    private lateinit var unsortedEntries: List<Entry>
+    private lateinit var entriesBubbleSorted: List<Entry>
+
+    val entriesCount: Int get() = findItems.size
 
     fun load() {
         val directoryFile = File(directoryFilePath)
         val findFile = File(findFilePath)
         directoryLines = directoryFile.readLines().toMutableList()
         findItems = findFile.readLines()
-        entries = getDirectoryEntries().toMutableList()
+        unsortedEntries = getDirectoryEntries().toList()
     }
 
     fun linearSearch(): Int {
-        val directory = getDirectoryEntries()
-                .map { it.phone to it.name }
-                .associate { it }
-        val foundCount = findItems.count { directory.containsKey(it) }
-        //"Found $foundCount / ${directoryLines.count()} entries"
+        val foundCount = findItems.count { findItem ->
+            unsortedEntries.any { findItem == it.name }
+        }
         return foundCount
     }
 
     fun bubbleSort(cancellationToken: () -> Unit) {
+        val sorted = unsortedEntries.toMutableList()
         val swap = { i1: Int, i2: Int ->
-            val tmp = entries[i1]
-            entries[i1] = entries[i2]
-            entries[i2] = tmp
+            val tmp = sorted[i1]
+            sorted[i1] = sorted[i2]
+            sorted[i2] = tmp
         }
-        for (i in entries.size - 1 downTo 1) {
+        for (i in sorted.size - 1 downTo 1) {
             for (j in 1..i) {
-                if (entries[j - 1].name > entries[j].name) {
+                if (sorted[j - 1].name > sorted[j].name) {
                     swap(j - 1, j)
                     cancellationToken()
                 }
             }
         }
+        entriesBubbleSorted = sorted
     }
 
     fun jumpSearch(cancellationToken: () -> Unit): Int {
         cancellationToken()
-        val n = entries.size
+        val n = entriesBubbleSorted.size
         val ns = Math.sqrt(n.toDouble()).toInt()
         val lastSegmentSize = n - ns * ns
 
@@ -56,12 +60,12 @@ class PhoneBook(
             var needFindInLastSegment = false
             for (i in 0 until ns) {
                 val nsPosition = i * ns
-                val entry = entries[nsPosition]
+                val entry = entriesBubbleSorted[nsPosition]
                 if (entry.name == findItem) {
                     hasFound = true
                 } else if (entry.name > findItem) {
                     for (j in nsPosition - 1 downTo nsPosition - ns) {
-                        if (entries[j].name == findItem) {
+                        if (entriesBubbleSorted[j].name == findItem) {
                             hasFound = true
                             break
                         }
@@ -80,7 +84,7 @@ class PhoneBook(
             }
             if (needFindInLastSegment) {
                 for (i in n - lastSegmentSize until n) {
-                    if (entries[i].name == findItem) {
+                    if (entriesBubbleSorted[i].name == findItem) {
                         hasFound = true
                         break
                     }

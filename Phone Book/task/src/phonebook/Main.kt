@@ -18,15 +18,17 @@ fun main() {
 private fun measureLinearSearch(phoneBook: PhoneBook): TimedResult<Int> {
     println("Start searching (linear search)...")
     return measureTime { phoneBook.linearSearch() }
-            .apply {
-                println("Found 500 / 500 entries. Time taken: ${timeSpent.toTimePeriod()}")
+            .also {
+                it.getSuccess()?.apply {
+                    println("Found $result / ${phoneBook.entriesCount} entries. Time taken: ${timeSpent.toTimePeriod()}")
+                }
             }
 }
 
 private fun measureBubbleSortAndJumpSearch(phoneBook: PhoneBook, linearSearchTime: Long) {
     println("Start searching (bubble sort + jump search)...")
 
-    val result = timeLimited(timeLimit = 1) { cancellationToken ->
+    val result = timeLimited(timeLimit = linearSearchTime) { cancellationToken ->
         val bubbleSortResult = BubbleSortAndJumpSearchTime.BubbleSort(
                 measureTime { phoneBook.bubbleSort(cancellationToken) }
         )
@@ -44,12 +46,13 @@ private fun measureBubbleSortAndJumpSearch(phoneBook: PhoneBook, linearSearchTim
         }
     }
 
-    println("Found 500 / 500 entries. Time taken: ${result.timeSpent.toTimePeriod()}")
     (result as? BubbleSortAndJumpSearchTime.JumpSearch)?.let { jumpSearch ->
+        println("Found ${jumpSearch.jumpSearch.getSuccessResult()} / ${phoneBook.entriesCount} entries. Time taken: ${result.timeSpent.toTimePeriod()}")
         println("Sorting time: ${jumpSearch.bubbleSort.timeSpent.toTimePeriod()}")
         println("Searching time: ${jumpSearch.jumpSearch.timeSpent.toTimePeriod()}")
     } ?: run {
         val linearSearch = result as BubbleSortAndJumpSearchTime.LinearSearch
+        println("Found ${linearSearch.linearSearch.getSuccessResult()} / ${phoneBook.entriesCount} entries. Time taken: ${result.timeSpent.toTimePeriod()}")
         println("Sorting time: ${linearSearch.jumpSearch.timeSpent.toTimePeriod()} - STOPPED, moved to linear search")
         println("Searching time: ${linearSearch.linearSearch.timeSpent.toTimePeriod()}")
     }
