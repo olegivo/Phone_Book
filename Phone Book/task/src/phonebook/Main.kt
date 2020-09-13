@@ -11,8 +11,10 @@ fun main() {
     val linearSearchTime = measureLinearSearch(phoneBook)
 
     println()
-
     measureBubbleSortAndJumpSearch(phoneBook, linearSearchTime.timeSpent)
+
+    println()
+    measureQuickSortAndBinarySearch(phoneBook)
 }
 
 private fun measureLinearSearch(phoneBook: PhoneBook): TimedResult<Int> {
@@ -56,6 +58,16 @@ private fun measureBubbleSortAndJumpSearch(phoneBook: PhoneBook, linearSearchTim
         println("Sorting time: ${linearSearch.jumpSearch.timeSpent.toTimePeriod()} - STOPPED, moved to linear search")
         println("Searching time: ${linearSearch.linearSearch.timeSpent.toTimePeriod()}")
     }
+}
+
+private fun measureQuickSortAndBinarySearch(phoneBook: PhoneBook) {
+    println("Start searching (quick sort + binary search)...")
+    val quickSort = measureTime { phoneBook.quickSort() }.getSuccess()!!
+    val binarySearch = measureTime { phoneBook.binarySearch() }.getSuccess()!!
+    val timeSpent = quickSort.timeSpent + binarySearch.timeSpent
+    println("Found ${binarySearch.result} / ${phoneBook.entriesCount} entries. Time taken: ${timeSpent.toTimePeriod()}")
+    println("Sorting time: ${quickSort.timeSpent.toTimePeriod()}")
+    println("Searching time: ${binarySearch.timeSpent.toTimePeriod()}")
 }
 
 class TimeoutException(val currentTimeMillis: Long) : RuntimeException()
